@@ -13,7 +13,6 @@
 
 #include <queue>
 #include <chrono>
-#include <thread>
 
 using namespace std;
 
@@ -25,12 +24,12 @@ public:
     Vector2 index;
     Block(int x, int y)
     {
-        this->index = (Vector2){x, y};
+        this->index = (Vector2){static_cast<float>(x), static_cast<float>(y)};
     }
 
     Block()
     {
-        this->index = (Vector2){0, 0};
+        *this = Block(0, 0);
     }
 
     void DrawBlock()
@@ -45,7 +44,7 @@ class Food : public Block
 public:
     Food()
     {
-        this->index = (Vector2){rand() % 48 + 1, rand() % 48 + 1};
+        this->index = (Vector2){static_cast<float>(rand() % 48 + 1.0), static_cast<float>(rand() % 48 + 1.0)};
     }
 
     void DrawFood()
@@ -63,12 +62,12 @@ class Snake
         Vector2 index;
         SnakeBlock(int x, int y)
         {
-            this->index = (Vector2){x, y};
+            this->index = (Vector2){static_cast<float>(x), static_cast<float>(y)};
         }
 
         SnakeBlock()
         {
-            this->index = (Vector2){0, 0};
+            *this = SnakeBlock(0, 0);
         }
 
         void DrawBlock()
@@ -211,7 +210,7 @@ Block worldWalls[196];
 Food food = Food();
 Snake snake = Snake();
 std::chrono::steady_clock::time_point lastMoveTime = std::chrono::steady_clock::now();
-Music backgroundMusic = LoadMusicStream("resources/snake_music.mp3");
+Music backgroundMusic = LoadMusicStream("resources/audio/bg_music.mp3");
 
 void SetupCamera()
 {
