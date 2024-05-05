@@ -7,8 +7,12 @@
 
 #include <raylib.h>
 
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 600
-#define BACKGROUND_COLOR CLITERAL(Color){ 0, 0, 0, 0 }
+#define MOVEMENT_REFRESH_RATE 75
+#define SCREEN_WIDTH 500
+#define SCREEN_HEIGHT 525
+#define GAME_WORLD_START_X 0
+#define GAME_WORLD_START_Y 25
+#define CELL_SIZE_X 10
+#define CELL_SIZE_Y 10
 
 #endif
