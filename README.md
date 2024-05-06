@@ -1,3 +1,3 @@
 # Snake Game
 
-Classic Snake Game made with Raylib C++
+Classic Snake Game made with Raylib C++d

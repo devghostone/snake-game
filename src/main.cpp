@@ -132,31 +132,36 @@ public:
         snakeBlocks.pop();
     }
 
-    void controlSnake()
+    void controlSnake(Sound& movementClicked)
     {
         if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) && currentDirection != DOWN)
         {
             currentDirection = UP;
+            PlaySound(movementClicked);
         }
         if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S) && currentDirection != UP)
         {
             currentDirection = DOWN;
+            PlaySound(movementClicked);
         }
         if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A) && currentDirection != RIGHT)
         {
             currentDirection = LEFT;
+            PlaySound(movementClicked);
         }
         if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D) && currentDirection != LEFT)
         {
             currentDirection = RIGHT;
+            PlaySound(movementClicked);
         }
     }
 
-    void eatFood(Food &food, int &score)
+    void eatFood(Food &food, int &score, Sound& pickUpSound)
     {
         SnakeBlock snakeHead = snakeBlocks.back();
         if (snakeHead.index.x == food.index.x && snakeHead.index.y == food.index.y)
         {
+            PlaySound(pickUpSound);
             score++;
             SnakeBlock head = snakeBlocks.back();
             SnakeBlock newBlock;
@@ -180,14 +185,16 @@ public:
         }
     }
 
-    void checkCollision()
+    void checkCollision(Sound& deadSound, bool& isPlaying)
     {
         SnakeBlock snakeHead = snakeBlocks.back();
         for (int i = 0; i < snakeBlocks.size() - 1; i++)
         {
             if (snakeHead.index.x == snakeBlocks.front().index.x && snakeHead.index.y == snakeBlocks.front().index.y)
             {
-                SetupWorld();
+                PlaySound(deadSound);
+                isPlaying = false;
+                //SetupWorld();
                 break;
             }
             snakeBlocks.push(snakeBlocks.front());
@@ -199,18 +206,25 @@ public:
 
         if (snakeHead.index.x <= 0 || snakeHead.index.x >= 49 || snakeHead.index.y <= 0 || snakeHead.index.y >= 49)
         {
-            SetupWorld();
+            PlaySound(deadSound);
+            isPlaying = false;
+            //SetupWorld();
         }
     }
 };
 
 Camera2D camera;
 int score = 0;
+bool isPlaying = true;
 Block worldWalls[196];
 Food food = Food();
 Snake snake = Snake();
 std::chrono::steady_clock::time_point lastMoveTime = std::chrono::steady_clock::now();
-Music backgroundMusic = LoadMusicStream("resources/audio/bg_music.mp3");
+
+Music backgroundMusic;
+Sound pickUp;
+Sound movementClicked;
+Sound dead;
 
 void SetupCamera()
 {
@@ -218,6 +232,14 @@ void SetupCamera()
     camera.offset = (Vector2){0, 0};
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
+}
+
+void SetupAudio(){
+    InitAudioDevice();
+    backgroundMusic = LoadMusicStream("resources/audio/bg_music.mp3");
+    pickUp = LoadSound("resources/audio/pickup.wav");
+    movementClicked = LoadSound("resources/audio/movement_clicked.wav");
+    dead = LoadSound("resources/audio/dead.wav");
 }
 
 void SetupWorld()
@@ -243,7 +265,8 @@ void SetupWorld()
     snake = Snake();
     score = 0;
     lastMoveTime = std::chrono::steady_clock::now();
-    Food newFood = Food();
+    food = Food();
+    isPlaying = true;
 }
 
 void RestartGameOnPressed()
@@ -263,15 +286,15 @@ void DrawSnakeAndDoSnakeLogic()
     // Calculate the time difference since the last move
     std::chrono::milliseconds timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastMoveTime);
 
-    if (timeDiff.count() >= MOVEMENT_REFRESH_RATE)
+    if (timeDiff.count() >= MOVEMENT_REFRESH_RATE && isPlaying)
     {
-        snake.checkCollision();
+        snake.checkCollision(dead, isPlaying);
         snake.moveSnake();
-        snake.eatFood(food, score);
+        snake.eatFood(food, score, pickUp);
         lastMoveTime = now;
     }
     snake.drawSnake();
-    snake.controlSnake();
+    snake.controlSnake(movementClicked);
     EndMode2D();
 }
 
@@ -301,27 +324,39 @@ void DrawScoreBoard()
     GuiDrawText("GhostOne", (Rectangle){SCREEN_WIDTH - 200, 0, 200, 25}, 2, WHITE);
 }
 
+void DrawDeathScreen(){
+    GuiDrawText("You Died", (Rectangle){SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT / 2 - 50, 100, 50}, 1, RED);
+    char scoreStr[50];
+    sprintf(scoreStr, "Your Final Score: %d", score);
+    GuiDrawText(scoreStr, (Rectangle){SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT / 2 - 30, 100, 50}, 1, WHITE);
+    GuiDrawText("Press R to restart the game", (Rectangle){SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2, 200, 50}, 1, WHITE);
+    //GuiDrawText("You Died", (Rectangle){SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT / 2 - 50, 100, 50}, 1, RED);
+    //DrawText("Press R to Restart", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2, 20, WHITE);
+}
+
 int main()
 {
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Snake Game");
-    InitAudioDevice();
     SetTargetFPS(60);
     SetupCamera();
+    SetupAudio();
     SetupWorld();
     PlayMusicStream(backgroundMusic);
 
     while (!WindowShouldClose())
-    {
+    {   
+        UpdateMusicStream(backgroundMusic);
         BeginDrawing();
         ClearBackground(BLACK);
         DrawWorld();
         DrawSnakeAndDoSnakeLogic();
         food.DrawFood();
         DrawScoreBoard();
+        if(!isPlaying){
+            DrawDeathScreen();
+        }
         RestartGameOnPressed();
-
-        DrawFPS(10, 10);
         EndDrawing();
     }
 

@@ -16,8 +16,9 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s USE_GLFW=3 -s ASSERTION
 
     find_library(RL_LIBRARY NAMES raylib PATHS lib/raylib/src NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
     target_link_libraries(snake-game ${RL_LIBRARY})
+    set_target_properties(snake-game PROPERTIES LINK_FLAGS "--preload-file ${CMAKE_SOURCE_DIR}/resources/audio@resources/audio")
 else()
     add_subdirectory(lib/raylib)
     target_link_libraries(snake-game raylib)
-    set_target_properties(snake-game PROPERTIES LINK_FLAGS "--preload-file ${CMAKE_SOURCE_DIR}/resources/audio@resources/audio")
+    file(COPY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR})
 endif()
